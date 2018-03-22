@@ -25,8 +25,10 @@ def bigramCountDic(s):
     res = {}
     trigrams = {}
     for i in range(len(bigrams)):
-        res[bigrams[i]] = s.count(bigrams[i])
+        res[bigrams[i]] = 0
         trigrams[bigrams[i]] = makeAlphabetDic()
+    for i in range(2, len(s)):
+        res[(s[i-2] + s[i-1])] += 1
     return (res, trigrams)
 
 def rawTrigramCountDic(r, s):
@@ -44,9 +46,7 @@ def laplaceSmooth(a,b):
     return (a+1)/(b+V)
 
 def generateRandom(k, probs):
-    fst = random.choice(myAlphabet)
-    snd = random.choice(myAlphabet)
-    res = fst + snd
+    res = random.choice(myAlphabet) + random.choice(myAlphabet)
     for i in range(k-2):
         if(3< k <300):
             res += selectNext(res, probs)
@@ -63,12 +63,11 @@ def selectNext(s, probs):
         sumProbs += i
     for i in range(1, len(myAlphabet)+1):
         cumulatedProbs[i] = cumulatedProbs[i-1] + bigramProbs[myAlphabet[i-1]]
+
     randomNumber = random.uniform(0.0, sumProbs)
     for i in range(len(cumulatedProbs)):
         if randomNumber <= cumulatedProbs[i]:
             return myAlphabet[i-1]
-
-    return max(bigramProbs, key=lambda i: bigramProbs[i])
 
 def perplexity(s, model):
     res = 1
@@ -77,23 +76,19 @@ def perplexity(s, model):
         if prevBigram in model.keys():
             res *= model[prevBigram][s[i]]
         else:
-            res *= laplaceSmooth(0, 0) #pas sûr là
+            res *= laplaceSmooth(0, 0)
     return res**(-1/len(s))
     
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", help = "load the given country language model", choices=["AU", "GB", "US"])
     parser.add_argument("-g", help = "generate random letters", type=int)
-    parser.add_argument("-m", help = "source model for generating random letters")
-    parser.add_argument("-c", help = "compute the language model for the given country", choices=["AU", "GB", "US", "FR"])
-    parser.add_argument("-t", help = "compute the language model for the given country", choices=["AU", "GB", "US"])
+    parser.add_argument("-m", help="source model for generating random letters", choices=["AU", "GB", "US"])
+    parser.add_argument("-c", help = "compute the language model for the given country", choices=["AU", "GB", "US"])
+    parser.add_argument("-t", help="iz question", choices=["AU", "GB", "US"])
     parser.add_argument("-tests", help = "run all tests")
+    parser.add_argument("-test", help="run tests for a single model", choices=["AU", "GB", "US"])
     args = parser.parse_args()
-
-    if args.l:
-        print("load file")
-        model = loadModel("model." + args.l)
 
     if(args.g and not args.m):
         print("missing -m arg")
@@ -101,7 +96,8 @@ def main():
         print("missing -g arg")
     elif(args.g and args.m):
         model = loadModel("model." + args.m)
-        print(generateRandom(args.g, model))
+        if model != None:
+            print(generateRandom(args.g, model))
     if args.c:
         f = open("training." + args.c, encoding="utf8")
         content = f.read()
@@ -112,15 +108,32 @@ def main():
         writeModel("model." + args.c, r)
     if args.t:
         model = loadModel("model." + args.t)
-        res = 0
-        for i in model["ab"].values():
-            res += i
-        print(res)
+        if model != None:
+            for key, val in model["iz"].items():
+                print("iz" + key + " : " + str(val))
     if args.tests:
         testTexts = parseTestFile("test")
+        countries = ["AU", "GB", "US"]
         for i in range(len(testTexts)):
-            for country in ["AU", "GB", "US"]:
+            print("__________________________________________________________________________________")
+            tmpPerps = []
+            for country in countries:
                 model = loadModel("model." + country)
-                print("TEXT nr " + str(i) + " | RESULT = " + testTexts[i][0] + " | Perplexity for : " + country + " : " + str(perplexity(testTexts[i][1], model)))
+                if model != None:
+                    tmpPerps.append(perplexity(testTexts[i][1], model))
+            if model != None:
+                minTmpPerp = min(tmpPerps)
+                for j in range(len(countries)):
+                    if tmpPerps[j] == minTmpPerp:
+                        print("TEXT nr " + str(i) + " | EXPECTED RESULT = " + testTexts[i][0] + " | Perplexity for : " + countries[j] + " : " + bcolors.WARNING + str(tmpPerps[j]) + bcolors.ENDC)
+                    else:
+                        print("TEXT nr " + str(i) + " | EXPECTED RESULT = " + testTexts[i][0] + " | Perplexity for : " + countries[j] + " : " + str(tmpPerps[j]))
+    if args.test:
+        testTexts = parseTestFile("test")
+        model = loadModel("model." + args.test)
+        if model != None:
+            for i in range(len(testTexts)):
+                print("TEXT nr " + str(i) + " | Perplexity for : " + args.test + " : " + str(perplexity(testTexts[i][1], model)))
+    
 
 main()

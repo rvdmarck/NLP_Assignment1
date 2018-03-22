@@ -9,10 +9,15 @@ def writeModel(filename, model):
     f.close
 
 def loadModel(filename):
-    f = open(filename, 'r')
-    model = loads(f.read())
-    f.close()
-    return model
+    try:
+        f = open(filename, 'r')
+        model = loads(f.read())
+        f.close()
+        return model
+    except FileNotFoundError:
+        print("Please use first the -c [AU|GB|US] command before in order to compute the different models")
+        return None
+    
 
 def parseTestFile(filename):
     f = open(filename, 'r')
@@ -34,3 +39,13 @@ def filterData(s):
     s = ' '.join(s.split())
     s = s.replace(" ", "__")  # Replace all whitespaces
     return s
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'

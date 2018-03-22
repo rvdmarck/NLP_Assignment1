@@ -1,0 +1,211 @@
+Introduction
+
+The goal of this project is to compute language models based on given training sets concerning some varieties of the English language 
+and then using them in order to guess the language variety of a written document using a test set. The language model is built using trigrams letter.
+Given the generated models, generation of random outputs and language variety verification can be achieved. The programe should be made using
+Python 3.
+
+
+Method
+
+    Core
+The first thing to do to have a model on a given training set is to compute the trigrams. In order to do that, I compute the 
+frequence of every possible bigrams we can make given the alphabet. In this case,
+the alphabetis the set of lowercase letters including the underscore symbol. After that, we need
+to compute the raw count of trigrams. To achieve that, I make a large matrix (using dictionnaries to improve performance) where every row is 
+one of the possible bigram and every column is one symbol of the alphabet. Every cell of the matrix
+will first contain the frequency of seeing the letter at the given column after the bigram at the given row or in other
+words the frequency of the trigram. After that we will compute the probability for every of those trigrams using the frequence
+of every possible bigrams computed earlier and using the Laplace smoothing where we take V = v² where v is the alphabet size in this case.
+After computing the probability for every trigram, we have our model ready and we can compute things like perplexity
+or generating random output according to the computed probabilities.
+
+    Simplifications
+In order to falicitate the computations, some simplifications on the input text have been made.
+    - Every characters that were not ASCII alphabetic were removed.
+    - Every uppercase characters transformed into lowercase characters
+    - Every multiple successive whitespaces replaced by a single whitespace.
+    - Every single whitespaces replaced by a double underscore.
+
+The two last simplifications implies that in the end we have one long string consisting of only
+words separated by exactly two underscores.
+
+    Double underscore : 
+Changing single whitespaces by double underscores serves as a separation between words.
+Because we are considering trigrams and if we use double underscores and we are considering the first/last letter of 
+a single word then the probability for those particular trigrams will not be affected by the probability of the previous/next
+trigrams. 
+As an example, let us consider the following sentence : "I love NLP", which after transformation gives "i__love__nlp".
+Then we will have to consider the following trigrams : [i__, __l, _lo, lov, ove, ve_, e__, __n, _nl, nlp]. We can observe that
+no final/first letter of any word are in the same trigram as a first/final letter of another word. So for a given trigram
+we know for sure that its probability is not affected by the end/start letter of another word.
+
+
+Manual for the program :
+Several commands are at your disposal in order to compute the different tasks.
+- By using the -c [AU|US|GB], you can compute the model of the given language variety. The model
+will be written in a file in the form model.X where X is the chosen variety.
+- By using the command -g k -m [AU|US|GB] where k is an integer between 3 and 300, the program outputs
+a string composed of k letters formed using the probabilities of the given model.
+- With the command -test [AU|US|GB], the user is prompted with the perplexity score of the chosen variety on
+every text from the test set.
+
+
+
+DISCUSSIONS
+• Do you need to run the test set on all three language models or is the score from a
+single variety model sufficient?
+
+A : The score alone does not tell much about the language variety of the text. Indeed a 
+low perplexity means that we have high probabilities in the model and thus that predictions
+should be good. But given that we run our models on the same language (English) and the differences
+will not be high enough to tell the language variety with the score alone.
+
+• Would a unigram or bigram language model work as well? Explain why (not).
+
+A : Let us first consider the unigram case. In this case we can summarize the probabilities in 
+the model being influenced only by the frequency of a given letter. For example, if we would model a language
+containing a lot of occurences ofthe letter "e" using unigrams, the probability for this letter will be high.
+In practice, to differentiate between language variety using unigrams would be very inefficient. But if we were to 
+distinguish between languages that uses very different letter frequencies, unigrams would be sufficient.
+
+Concerning language modeling using bigrams, we would get reasonable results but not as good as with trigrams. It would work
+quite well with language varieties that have a lot of words that differentiate only by one letter. For example, it is known that in
+US English, there exists more words using a "z" instead of a "s" for the same words comparing to the GB English and thus using bigrams
+to differentiate between those two should get reasonable results.
+
+• Do the language models show anything about similarity of the varieties? Why
+(not)?
+If we were to compare the probabilities of the same trigrams between two models, we could obtain a difference.
+After that we could compute the mean difference between all the trigrams composing the models. That result should be a good indicator of the 
+similarity of the varieties. Because if two probabilities of the same trigram does not differentiate much, this means that when encountering
+the related bigram, the next letter should be the same. So the lesser the difference, the more similar the varieties are.
+
+• Can you think of a better way to make a language variety guesser?
+
+INCLUDING
+An excerpt of the language model for British English and another excerpt for
+American English model, displaying all n-grams and their probability with the twoletter
+history i z (E.g. izo, ize, izo etc.).
+US : 
+iza : 0.1616924820551568
+izb : 0.0007555723460521345
+izc : 0.00037778617302606723
+izd : 0.00037778617302606723
+ize : 0.443520967132603
+izf : 0.00037778617302606723
+izg : 0.00037778617302606723
+izh : 0.0007555723460521345
+izi : 0.055156781261805815
+izj : 0.00037778617302606723
+izk : 0.00037778617302606723
+izl : 0.00037778617302606723
+izm : 0.001511144692104269
+izn : 0.0007555723460521345
+izo : 0.024178315073668303
+izp : 0.00037778617302606723
+izq : 0.00037778617302606723
+izr : 0.00037778617302606723
+izs : 0.00037778617302606723
+izt : 0.0007555723460521345
+izu : 0.009822440498677748
+izv : 0.00037778617302606723
+izw : 0.00037778617302606723
+izx : 0.00037778617302606723
+izy : 0.00037778617302606723
+izz : 0.017378163959199094
+iz_ : 0.012844729882886286
+~0.70
+GB :
+iza : 0.10870907967881409
+izb : 0.0006176652254478073
+izc : 0.0006176652254478073
+izd : 0.0018529956763434219
+ize : 0.33662754786905497
+izf : 0.0006176652254478073
+izg : 0.0012353304508956147
+izh : 0.0018529956763434219
+izi : 0.028412600370599134
+izj : 0.0006176652254478073
+izk : 0.0006176652254478073
+izl : 0.0006176652254478073
+izm : 0.0006176652254478073
+izn : 0.0006176652254478073
+izo : 0.02347127856701668
+izp : 0.0006176652254478073
+izq : 0.0006176652254478073
+izr : 0.0006176652254478073
+izs : 0.0012353304508956147
+izt : 0.0006176652254478073
+izu : 0.00926497838171711
+izv : 0.0006176652254478073
+izw : 0.0006176652254478073
+izx : 0.0006176652254478073
+izy : 0.0012353304508956147
+izz : 0.0253242742433601
+iz_ : 0.017912291537986413
+~0.50
+Observation :
+If we were to sum those probabilities we could observe that the result would be higher in the US case than in the GB case.
+This is explained because it is known that the US language tends to replace the "s" with a "z" more often than in the GB language.
+This is why we have a higher probability to see trigrams like "ize" in the US language (P ~= 0.443) than in the GB language (P ~= 0.336).
+
+
+• 200 characters of random output for each of the three languages varieties
+AU : l__unin__es__of__ovesidembillic__suggleamet__me__cabotaincessfruniste__or__covin__of__giventurp__lishis__he__mand__of__of__sounicautheorlitan__parded__bar__st__abol__wo__thavediffech__gram__hat__be__b
+GB : jkware__keente__gaties__a__in__sts__what__smoutenagrear__tons__i__whotreve__the__and__ty__deast__licen__hanand__men__spopeund__zincifire__banzyjvyzphouden__wit__pay__sccum__ch__bold__offents__and__but
+US : lf__arever__ther__of__them__cals__the__ed__dowle__aduk__to__fur__but__theirsuess__the__of__ust__revid__piesshe__or__scus__is__of__haven__hing__of__his__to__s__of__juseenow__food__ective__ser__sitted__
+Note : 
+I kept the double underscores simplification but oneshould keep in mind that to get the "correct" results,
+thos double underscores shouldbe replaced by a single whitespace.
+
+Observation :
+We can first observe that for most of the words have a reasonable length that tends to prove that the probabilities for the whitespaces
+have a good approximation. For the words itself, it is rather normal that for the majority they do not mean anything given that
+we only consider trigrams of letters and not words. It is better to interpret those results by looking at them in group of three letters.
+Nevertheless we can observe that we obtain some "real" words like [them, of, a, in, to, fur, the, and, food, ...]. In fact, the smaller the word
+the bigger the probability we have to have an existing word because as explained just before, if we are in the case of a long word,
+we should just consider group of 3 letters and thus the bigger the words, the more group of 3 letters we have and the more chance we have
+that the final word would not exist.
+
+
+• the perplexity scores from the three language models for each test sentence
+
+TEXT nr 0 | EXPECTED RESULT = AU | Perplexity for : AU : 6.424558154862745
+TEXT nr 0 | EXPECTED RESULT = AU | Perplexity for : GB : 6.706362400204314
+TEXT nr 0 | EXPECTED RESULT = AU | Perplexity for : US : 6.640202183651292
+__________________________________________________________________________________
+TEXT nr 1 | EXPECTED RESULT = AU | Perplexity for : AU : 6.406748416058941
+TEXT nr 1 | EXPECTED RESULT = AU | Perplexity for : GB : 6.675019182274301
+TEXT nr 1 | EXPECTED RESULT = AU | Perplexity for : US : 6.6409537665194
+__________________________________________________________________________________
+TEXT nr 2 | EXPECTED RESULT = AU | Perplexity for : AU : 7.143498482313628
+TEXT nr 2 | EXPECTED RESULT = AU | Perplexity for : GB : 7.4311516099969435
+TEXT nr 2 | EXPECTED RESULT = AU | Perplexity for : US : 7.198212372188335
+__________________________________________________________________________________
+TEXT nr 3 | EXPECTED RESULT = GB | Perplexity for : AU : 5.729379335812877
+TEXT nr 3 | EXPECTED RESULT = GB | Perplexity for : GB : 5.602016273917891
+TEXT nr 3 | EXPECTED RESULT = GB | Perplexity for : US : 6.1659738367452634
+__________________________________________________________________________________
+TEXT nr 4 | EXPECTED RESULT = GB | Perplexity for : AU : 6.39017953299862
+TEXT nr 4 | EXPECTED RESULT = GB | Perplexity for : GB : 6.212592459105628
+TEXT nr 4 | EXPECTED RESULT = GB | Perplexity for : US : 6.205505809395692
+__________________________________________________________________________________
+TEXT nr 5 | EXPECTED RESULT = GB | Perplexity for : AU : 5.907477804860285
+TEXT nr 5 | EXPECTED RESULT = GB | Perplexity for : GB : 5.900361336970806
+TEXT nr 5 | EXPECTED RESULT = GB | Perplexity for : US : 5.938902866085299
+__________________________________________________________________________________
+TEXT nr 6 | EXPECTED RESULT = US | Perplexity for : AU : 5.564627621271685
+TEXT nr 6 | EXPECTED RESULT = US | Perplexity for : GB : 5.289588538426385
+TEXT nr 6 | EXPECTED RESULT = US | Perplexity for : US : 5.246940511275261
+__________________________________________________________________________________
+TEXT nr 7 | EXPECTED RESULT = US | Perplexity for : AU : 6.288582484733484
+TEXT nr 7 | EXPECTED RESULT = US | Perplexity for : GB : 6.289976093628364
+TEXT nr 7 | EXPECTED RESULT = US | Perplexity for : US : 6.244166993527736
+__________________________________________________________________________________
+TEXT nr 8 | EXPECTED RESULT = US | Perplexity for : AU : 5.47890800206603
+TEXT nr 8 | EXPECTED RESULT = US | Perplexity for : GB : 5.224499493063011 
+TEXT nr 8 | EXPECTED RESULT = US | Perplexity for : US : 5.23771967915472
+
+• precision across all test sentences
+7/9
