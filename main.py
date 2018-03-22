@@ -80,7 +80,7 @@ def perplexity(s, model):
     return res**(-1/len(s))
     
 
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", help = "generate random letters", type=int)
     parser.add_argument("-m", help="source model for generating random letters", choices=["AU", "GB", "US"])
@@ -136,4 +136,3 @@ def main():
                 print("TEXT nr " + str(i) + " | Perplexity for : " + args.test + " : " + str(perplexity(testTexts[i][1], model)))
     
 
-main()
